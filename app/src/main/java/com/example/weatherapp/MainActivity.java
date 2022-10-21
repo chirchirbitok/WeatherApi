@@ -18,7 +18,13 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.BasicNetwork;
 import com.android.volley.toolbox.DiskBasedCache;
 import com.android.volley.toolbox.HurlStack;
+import com.android.volley.toolbox.JsonArrayRequest;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class MainActivity extends AppCompatActivity {
     Button btn_cityID, btn_getCityWeatherById, btn_CityWeatherByName;
@@ -43,37 +49,33 @@ public class MainActivity extends AppCompatActivity {
                 // Instantiate the cache
                 Cache cache = new DiskBasedCache(getCacheDir(), 1024 * 1024); // 1MB cap
 
-                // Set up the network to use HttpURLConnection as the HTTP client.
-                Network network = new BasicNetwork(new HurlStack());
+                String url = "https://api2.binance.com/api/v3/ticker/24hr";
 
-                // Instantiate the RequestQueue with the cache and network.
-                RequestQueue requestQueue = new RequestQueue(cache, network);
-
-                // Start the queue
-                requestQueue.start();
-
-                String url = "https://api.brightsky.dev/weather?lat=52&lon=7.6&date=2020-04-21";
-
-                // Formulate the request and handle the response.
-                StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
-                        new Response.Listener<String>() {
+                JsonArrayRequest jsonArrayRequest = new JsonArrayRequest(Request.Method.GET, url, null,
+                        new Response.Listener<JSONArray>() {
                             @Override
-                            public void onResponse(String response) {
-                                // Do something with the response
+                            public void onResponse(JSONArray response) {
+                                String symbolId = "";
+                                try {
+                                    JSONObject id = response.getJSONObject(0);
+                                    symbolId = id.getString("symbol");
+                                } catch (JSONException e) {
+                                    e.printStackTrace();
+                                }
+                                Toast.makeText(MainActivity.this, symbolId, Toast.LENGTH_SHORT).show();
                             }
-                        },
-                        new Response.ErrorListener() {
-                            @Override
-                            public void onErrorResponse(VolleyError error) {
-                                // Handle error
-                            }
-                        });
+                        }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Toast.makeText(MainActivity.this, "Something went wrong", Toast.LENGTH_SHORT).show();
+                    }
+                });
+                MySingleton.getInstance(MainActivity.this).addToRequestQueue(jsonArrayRequest);
 
-                // Add the request to the RequestQueue.
-                requestQueue.add(stringRequest);
+
 
                  // ...
-                Toast.makeText(MainActivity.this, "You clicked me 1", Toast.LENGTH_SHORT).show();
+                //Toast.makeText(MainActivity.this, "You clicked me 1", Toast.LENGTH_SHORT).show();
             }
         });
 
